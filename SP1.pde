@@ -6,10 +6,10 @@
  * 2D arrays are useful for storing images. In this example, each dot 
  * is colored in relation to its distance from the center of the image. 
  */
- 
+
 import java.util.Random;
 
-Game game = new Game(25, 25, 0, 1);
+Game game = new Game(25, 25, 5, 2);
 PFont font;
 
 public void settings() {
@@ -46,26 +46,26 @@ void draw()
   {
     for (int x = 0; x < game.getWidth(); x++)
     {
-      if(board[x][y] == 0)
+      if (board[x][y] == 0)
       {
-        fill(0,0,0);
-      }
-      else if(board[x][y] == 1)
+        fill(0, 0, 0);
+      } else if (board[x][y] == 1)
       {
-        fill(0,0,255);
-      }
-      else if(board[x][y] == 2)
+        fill(0, 0, 255);
+      } else if (board[x][y] == 2)
       {
-        fill(255,0,0);
-      }
-      else if(board[x][y] == 3)
+        fill(255, 0, 0);
+      } else if (board[x][y] == 3)
       {
-        fill(0,255,0);
-      }
-      stroke(100,100,100);
+        fill(0, 255, 0);
+      } else if (board[x][y] == 4)
+        fill(255);
+      stroke(100, 100, 100);
       rect(x*40, y*40, 40, 40);
     }
   }
   fill(255);
-  text("Lifes: "+game.getPlayerLife(), 25,25);
+  text("Lifes 1: "+game.getPlayerLife(), 25, 25);
+  
+  text("Lifes 2: " + game.player2Life, width - 100, 25);
 }

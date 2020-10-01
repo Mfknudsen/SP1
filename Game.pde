@@ -12,7 +12,10 @@ class Game
   private Dot[] enemies;
   //
   //
-  private Dot[] foods;
+  private Dot[] foods = new Dot[0];
+  private Dot player2 = null;
+  public int player2Life = 100;
+  private Keys keys2 = null;
 
   Game(int width, int height, int numberOfEnemies, int numberOfFoods)
   {
@@ -34,7 +37,7 @@ class Game
     this.board = new int[width][height];
     this.width = width;
     this.height = height;
-    keys = new Keys();
+    keys = new Keys(false);
     player = new Dot(0, 0, width-1, height-1);
     enemies = new Dot[numberOfEnemies];
     for (int i = 0; i < numberOfEnemies; ++i)
@@ -45,6 +48,9 @@ class Game
 
     //
     //
+    player2 = new Dot(width - 1, 0, width-1, height-1);
+    keys2 = new Keys(true);
+
     foods = new Dot[numberOfFoods];
     for (int i = 0; i < numberOfFoods; i++)
       foods[i] = new Dot((int)random(width - 1), (int)random(height - 1), width - 1, height - 1);
@@ -67,25 +73,36 @@ class Game
 
   public void onKeyPressed(char ch)
   {
-    keys.onKeyPressed(ch);
+    keys.onKeyPressed(ch, 0);
+    keys2.onKeyPressed(' ', keyCode);
   }
 
   public void onKeyReleased(char ch)
   {
-    keys.onKeyReleased(ch);
+    keys.onKeyReleased(ch, 0);
+    keys2.onKeyReleased(' ', keyCode);
   }
 
   public void update()
   {
-    updatePlayer();
-    updateEnemies();
-    checkForCollisions();
-    clearBoard();
-    populateBoard();
+    if (playerLife > 0 && player2Life > 0) {
+      updatePlayer();
+      updateEnemies();
+      checkForCollisions();
+      clearBoard();
+      populateBoard();
 
-    //
-    //
-    UpdateFood();
+      //
+      //
+      UpdateFood();
+    } else {
+      background(0);
+
+      if (playerLife > 0 )
+        text("Player 1 Wins!", width/2, height/2);
+      else 
+      text("Player 2 Wins!", width/2, height/2);
+    }
   }
 
 
@@ -126,19 +143,35 @@ class Game
     {
       player.moveRight();
     }
+
+    if (keys2.wDown() && !keys2.sDown())
+      player2.moveUp();
+    if (keys2.aDown() && !keys2.dDown())
+      player2.moveLeft();
+    if (keys2.sDown() && !keys2.wDown())
+      player2.moveDown();
+    if (keys2.dDown() && !keys2.aDown())
+      player2.moveRight();
   }
 
   private void updateEnemies()
   {
     for (int i = 0; i < enemies.length; ++i)
     {
+      Dot p = null;
+      if (dist(player.getX(), player.getY(), enemies[i].getX(), enemies[i].getY())
+        < dist(player2.getX(), player2.getY(), enemies[i].getX(), enemies[i].getY()))
+        p = player;
+      else
+        p = player2;
+
       //Should we follow or move randomly?
       //2 out of 3 we will follow..
       if (rnd.nextInt(3) < 2)
       {
         //We follow
-        int dx = player.getX() - enemies[i].getX();
-        int dy = player.getY() - enemies[i].getY();
+        int dx = p.getX() - enemies[i].getX();
+        int dy = p.getY() - enemies[i].getY();
         if (abs(dx) > abs(dy))
         {
           if (dx > 0)
@@ -197,6 +230,8 @@ class Game
     //
     for (int i = 0; i < foods.length; i++)
       board[foods[i].getX()][foods[i].getY()] = 3;
+
+    board[player2.getX()][player2.getY()] = 4;
   }
 
   private void checkForCollisions()
@@ -209,6 +244,24 @@ class Game
         //We have a collision
         --playerLife;
       }
+      if (enemies[i].getX() == player2.getX() && enemies[i].getY() == player2.getY())
+        player2Life--;
+    }
+
+    //
+    //
+    for (int i = 0; i < foods.length; i++) {
+      if (foods[i].getX() == player.getX() && foods[i].getY() == player.getY()) {
+        playerLife += 10;
+        if (playerLife > 100)
+          playerLife = 100;
+        foods[i] = new Dot((int)random(width - 1), (int)random(height - 1), width - 1, height - 1);
+      } else if (foods[i].getX() == player2.getX() && foods[i].getY() == player2.getY()) {
+        player2Life += 10;
+        if (player2Life > 100)
+          player2Life = 100;
+        foods[i] = new Dot((int)random(width - 1), (int)random(height - 1), width - 1, height - 1);
+      }
     }
   }
 
@@ -216,40 +269,44 @@ class Game
   //
   //
   private void UpdateFood() {
-    for (int i = 0; i < foods.length; i++) {
+    for (int i = 0; i < foods.length; ++i)
+    {
       Dot food = foods[i];
-      int best = 1;
-      float dist = 0;
-
-      for (int dir = 0; i < 4; i++) {
-        float checkDist = 0;
-        if (dir == 0 && food.getY() + 2 < food.maxY)
-          checkDist = dist(player.getX(), player.getY(), food.getX(), food.getY() + 2);
-        else if (dir == 1)
-          checkDist = dist(player.getX(), player.getY(), food.getX(), food.getY() - 2);
-        else if (dir == 2)
-          checkDist = dist(player.getX(), player.getY(), food.getX() - 2, food.getY());
+      for (int j = 0; j < 2; j++) {
+        Dot p = null;
+        if (j == 0)
+          p = player;
         else
-          checkDist = dist(player.getX(), player.getY(), food.getX() + 2, food.getY());
+          p = player2;
 
-println(checkDist, dist);
-        if (checkDist > dist) {
-        println(player.getX(), player.getY(), food.getX(), food.getY());
-          dist = checkDist;
-          best = dir;
+        if (rnd.nextInt(3) < 2)
+        {
+          //We follow
+          int dx = p.getX() - food.getX();
+          int dy = p.getY() - food.getY();
+          if (abs(dx) < abs(dy))
+          {
+            if (dx < 0)
+              food.moveRight();
+            else
+              food.moveLeft();
+          } else if (dy < 0)
+            food.moveDown();
+          else
+            food.moveUp();
+        } else
+        {
+          int move = rnd.nextInt(4);
+          if (move == 0)
+            food.moveRight();
+          else if (move == 1)
+            food.moveLeft();
+          else if (move == 2)
+            food.moveUp();
+          else if (move == 3)
+            food.moveDown();
         }
       }
-
-      println(best);
-
-      if (best == 0)
-        food.moveDown();
-      else if (best == 1)
-        food.moveUp();
-      else if (best == 2)
-        food.moveLeft();
-      else
-        food.moveRight();
     }
   }
 }
