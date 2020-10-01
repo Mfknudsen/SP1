@@ -85,24 +85,15 @@ class Game
 
   public void update()
   {
-    if (playerLife > 0 && player2Life > 0) {
-      updatePlayer();
-      updateEnemies();
-      checkForCollisions();
-      clearBoard();
-      populateBoard();
+    updatePlayer();
+    updateEnemies();
+    checkForCollisions();
+    clearBoard();
+    populateBoard();
 
-      //
-      //
-      UpdateFood();
-    } else {
-      background(0);
-
-      if (playerLife > 0 )
-        text("Player 1 Wins!", width/2, height/2);
-      else 
-      text("Player 2 Wins!", width/2, height/2);
-    }
+    //
+    //
+    UpdateFood();
   }
 
 
@@ -274,7 +265,8 @@ class Game
       Dot food = foods[i];
       for (int j = 0; j < 2; j++) {
         Dot p = null;
-        if (j == 0)
+        if (dist(player.getX(), player.getY(), enemies[i].getX(), enemies[i].getY())
+          < dist(player2.getX(), player2.getY(), enemies[i].getX(), enemies[i].getY()))
           p = player;
         else
           p = player2;
